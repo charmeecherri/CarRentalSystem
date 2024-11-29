@@ -36,7 +36,7 @@ namespace CarRentalSystem.Controllers
                 return Ok(new { Token = token });
             return Unauthorized("Invalid email or password.");
         }
-        [Authorize(Roles = "User")]
+        [Authorize(Roles = "user")]
         [HttpGet("getCars")]
         public IActionResult GetCars()
         {

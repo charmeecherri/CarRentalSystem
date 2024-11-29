@@ -11,6 +11,8 @@ namespace CarRentalSystem.Repositories
             Car GetCarById(int id);
             IEnumerable<Car> GetAvailableCars();
             void UpdateCarAvailability(int id, bool isAvailable);
+
+             void DeleteCar(Car car);
     }
 
 

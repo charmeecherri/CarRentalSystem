@@ -1,6 +1,7 @@
 ﻿using CarRentalSystem.Models;
 using CarRentalSystem.Repositories;
 using CarRentalSystem.Services;
+using CarRentalSystem.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,14 +12,21 @@ namespace CarRentalSystem.Controllers
     [ApiController]
     public class CarController : ControllerBase
     {
-            private readonly ICarRentalService _carRentalService;
-            private readonly ICarRepository _carRepository;
+        private readonly ICarRentalService _carRentalService;
+        private readonly IUserService _userService;
+        private readonly ICarRepository _carRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IEmailService _emailService;
+        //private ICarRentalService carRentalService;
 
-            public CarController(ICarRentalService carRentalService, ICarRepository carRepository)
+        public CarController(ICarRentalService carRentalService, ICarRepository carRepository,IUserRepository userRepository, IEmailService emailService)
             {
                 _carRentalService = carRentalService;
                 _carRepository = carRepository;
-            }
+                _userRepository = userRepository;
+                _emailService = emailService;
+
+        }
 
 
         [HttpGet("Available")]
@@ -39,10 +47,32 @@ namespace CarRentalSystem.Controllers
 
 
         [HttpPost("RentCar")]
-        public IActionResult RentCar(int carId, int userId)
+        public async Task<IActionResult> RentCarAsync(int carId, int userId)
         {
+
             if (_carRentalService.RentCar(carId, userId))
-                return Ok("Car rented successfully!");
+            {
+                var user = _userRepository.GetUserById(userId);
+
+                if (user != null)
+                {
+                    var mail_body = $"Hi {user.Name}" +
+                       "<br>" +
+                       "Thank you for contacting Chubb. We appreciate your interest in our services." +
+                       "<br>" +
+                       "<br>" +
+                       "Thanks & Regards" +
+                       "<br>" +
+                       "Car Rentail Service";
+                    var message = new Message([user.Email], "Car Rental Services Request", mail_body, null);
+                    await _emailService.SendEmailAsync(message);
+                    return Ok("mail sent successfully");
+                }
+                
+                return BadRequest("User not found");
+
+            }
+
             return BadRequest("Car is unavailable or doesn't exist.");
         }
 
@@ -59,22 +89,22 @@ namespace CarRentalSystem.Controllers
         }
 
         
-        [Authorize(Roles = "User,Admin")]  
+        [Authorize(Roles = "user,Admin")]  
         [HttpPut("{id}")]
-        public IActionResult UpdateCarAvailability(int id, Car car)
+        public IActionResult UpdateCarAvailability(int id, bool isAvailable)
         {
-            _carRepository.UpdateCarAvailability(id, car.IsAvailable);
+            _carRepository.UpdateCarAvailability(id, isAvailable);
             return NoContent();
         }
 
-        
-        [Authorize(Roles = "Admin")]  
+
+        [Authorize(Roles = "user,Admin")]
         [HttpDelete("{id}")]
         public IActionResult DeleteCar(int id)
         {
             var car = _carRepository.GetCarById(id);
             if (car == null) return NotFound();
-            _carRepository.GetAvailableCars().ToList().Remove(car);  
+            _carRepository.DeleteCar(car);
             return NoContent();
         }
     }

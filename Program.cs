@@ -23,6 +23,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 // Register Services for Dependency Injection
 builder.Services.AddScoped<ICarRentalService, CarRentalService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var jwtsettings = builder.Configuration.GetSection("JwtSettings").Get<JwtConfiguration>();
 

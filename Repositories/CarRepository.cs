@@ -40,6 +40,19 @@ namespace CarRentalSystem.Repositories
             }
         }
 
+        public void DeleteCar(Car car)
+        {
+            try
+            {
+                context.Cars.Remove(car);
+                context.SaveChanges();
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
 
     }
 }
